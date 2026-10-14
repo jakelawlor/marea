@@ -10,7 +10,7 @@ plot(x, y, ...)
 \S4method{plot}{ea_data,missing}(
   x,
   style = c("default", "ribbon", "plain", "biomass", "anomaly", "histogram", "indicator",
-    "indicator_ref", "diversity", "temperature_regime", "nao_enhanced"),
+    "indicator_ref", "diversity", "temperature_regime", "nao_enhanced", "heatmap"),
   reference_period = c(1991, 2020),
   sd_threshold = 1,
   highlight_recent = TRUE,
@@ -21,6 +21,7 @@ plot(x, y, ...)
   warm_color = "red",
   cold_color = "blue",
   value_col = NULL,
+  heatmap_y = NULL,
   ...
 )
 }

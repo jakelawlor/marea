@@ -96,7 +96,7 @@ setMethod("plot", signature(x = "ea_data", y = "missing"),
                    
                    style = c("default", "ribbon", "plain", "biomass", "anomaly",
                              "histogram", "indicator", "indicator_ref", "diversity", 
-                             "temperature_regime", "nao_enhanced"),
+                             "temperature_regime", "nao_enhanced", "heatmap"),
                    reference_period = c(1991, 2020),
                    sd_threshold = 1, 
                    highlight_recent = TRUE,
@@ -108,6 +108,7 @@ setMethod("plot", signature(x = "ea_data", y = "missing"),
                    cold_color = "blue",
                    value_col = NULL,
                    ...) {
+            
             style <- match.arg(style)
             
             # Access slots using the S4 accessor methods for robustness
@@ -134,13 +135,27 @@ setMethod("plot", signature(x = "ea_data", y = "missing"),
             }
             
             # Base ggplot mapping
-            p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$year, y = .data$value))
-            labs <- list(
-              title    = paste(m$data_type, "for", m$region),
-              subtitle = paste("Source:", m$source_citation),
-              x        = "Year",
-              y        = paste0(m$data_type, " (", m$units, ")")
-            )
+            if(style == "heatmap"){
+              p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$year, y = as.character(""), fill = .data$value))
+              labs <- list(
+                title    = paste(m$data_type, "for", m$region),
+                subtitle = paste("Source:", m$source_citation),
+                x        = "Year",
+                fill     = paste0(m$data_type, " (", m$units, ")"),
+                y        = NULL
+              )
+              
+            } else {
+              p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$year, y = .data$value))
+              labs <- list(
+                title    = paste(m$data_type, "for", m$region),
+                subtitle = paste("Source:", m$source_citation),
+                x        = "Year",
+                y        = paste0(m$data_type, " (", m$units, ")")
+              )
+              
+            }
+
             
             # Add geoms by style
             p <- switch(
@@ -458,7 +473,39 @@ setMethod("plot", signature(x = "ea_data", y = "missing"),
                 
                 labs$subtitle <- paste0(labs$subtitle, " | Phases: |NAO| > 1 = Strong, 0 < |NAO| < 1 = Moderate")
                 p
-              }
+              },
+              
+              heatmap = {
+                if(anyDuplicated(df$year) > 0){
+                  warning("Multiple values present per year. Add y aesthetic to separate groups.",
+                          call.=F)
+                }
+                
+                # create gradient: 
+                # if the value crosses zero (anomaly-type values), use diverging
+                # if it doesn't, use viridis
+                pal <- 
+                  ifelse(
+                    min(df$value, na.rm=T) < 0,
+                    list(ggplot2::scale_fill_gradient2(
+                      low = cold_color,
+                      high = warm_color
+                    )),
+                    list(ggplot2::scale_fill_viridis_c())
+                  )
+                  
+                
+                
+                # add heatmap tiles showing indicator value
+                p <- p +
+                  ggplot2::geom_tile() + 
+                  pal
+                
+              },
+              
+              
+              
+              
             )
             
             # Apply labels and theme to the final plot

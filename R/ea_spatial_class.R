@@ -126,7 +126,7 @@ setMethod("ea_spatial", signature(data = "ANY", value_col = "character"),
                 }
               } else {
                 # Handle single value column (existing logic)
-                names(data)[names(data) == value_col] <- "value"
+                names(data)[names(data) == value_col] <- paste0(value_col, "_value")
               }
             }
             
@@ -148,7 +148,7 @@ setMethod("ea_spatial", signature(data = "ANY", value_col = "character"),
                 names(data) <- new_names
               } else {
                 # Handle single value attribute (existing logic)
-                names(data)[names(data) == value_col] <- "value"
+                names(data)[names(data) == value_col] <- paste0(value_col, "_value")
               }
             }
             
@@ -170,7 +170,7 @@ setMethod("ea_spatial", signature(data = "ANY", value_col = "character"),
                 names(data) <- new_names
               } else {
                 # Handle single value layer (existing logic)
-                names(data)[names(data) == value_col] <- "value"
+                names(data)[names(data) == value_col] <- paste0(value_col, "_value")
               }
             }
             # --- Metadata ---
@@ -434,4 +434,224 @@ ea.subset.spatial <- function(x, column, value) {
   }
   
   new("ea_spatial", data = subset_data, meta = x@meta)
+}
+
+
+
+
+#' Filter an `ea_spatial` Object by Attribute -- JL edit
+#'
+#' @description
+#' A helper function to subset the features or cells of an `ea_spatial` object
+#' based on the spatial or temporal dimsneions: latitude, longitude, and time. 
+#'
+#' @details
+#' This filters the `data` slot of the `ea_spatial` object, removing values 
+#' outside of the specified ranges. This is useful for viewing spatial data
+#' in a specific spatial or temporal range, or within a specified polygon boundary
+#' 
+#' @param x An `ea_spatial` object.
+#' @param lat_range target latitudinal bounds of subset `ea_spatial` object
+#' @param lon_range target longitudinal bounds of subset `ea_spatial` object
+#' @param years years to retain of spatial data, formatted as a vector: `c(2020,2022,2023)` or `c(2020:2022)` 
+#' @param months target months to retain (numeric): `1` or `c(1,7)`
+#' @param shape sf polygon of a focal shape in which to retain `ea_spatial` data
+#' 
+#' @return A new `ea_spatial` object containing only data within specified bounds.
+#'
+#' @examples
+#' if (requireNamespace("sf", quietly = TRUE) && requireNamespace("dplyr", quietly = TRUE)) {
+#'   pts <- list(sf::st_point(c(-63, 44)), sf::st_point(c(-66, 45)))
+#'   sf_df <- sf::st_sf(
+#'     temp = c(12, 13),
+#'     region_id = c("A", "B"),
+#'     geometry = sf::st_sfc(pts, crs = 4326)
+#'   )
+#'   obj <- ea_spatial(sf_df, "temp", "temp", "region", "time", "C")
+#'
+#'   # Filter for a specific region_id
+#'   ea.subset.spatial(obj, "region_id", "B")
+#' }
+#'
+#' @export
+ea.subset.spatial.dims <- function(x, 
+                                   lat_range = NULL,
+                                   lon_range = NULL,
+                                   years = NULL,
+                                   months = NULL,
+                                   shape = NULL) {
+  
+  if (!inherits(x, "ea_spatial")) stop("x must be an ea_spatial object.", call. = FALSE)
+
+  if ((!is.null(lat_range) | !is.null(lon_range)) & !is.null(shape)) 
+    stop("either subset by lat/lon or shape, not both.")
+
+  data_obj <- x@data
+  
+  
+  if (inherits(data_obj, "sf")) {
+    
+    print("In development")
+    
+    
+  } else if (inherits(data_obj, "stars")) {
+    
+    # create helper
+    subset_dim <- function(data_obj, dimension, range) {
+      
+      dim_get <- dimension
+      if(dimension %in% c("month","year"))
+        dim_get <- "time"
+      
+      vals <- stars::st_get_dimension_values(data_obj, dim_get)
+      
+      if(dimension %in% c("year","month")){
+        vals <- as.Date(vals)
+      }
+      
+      if(dimension == "month"){
+        keep <- (lubridate::month(vals) %in% range)
+      } else if(dimension == "year"){
+        keep <- (lubridate::year(vals) %in% range)
+      } else {
+        keep <- vals >= min(range) & vals <= max(range)
+      }
+     
+      if (!any(keep)) {
+        stop("No coordinates within the requested range.", call.=FALSE)
+      }
+      
+      idx <- rep(list(TRUE), length(stars::st_dimensions(data_obj)))
+      idx[[match(dim_get, names(stars::st_dimensions(data_obj)))]] <- which(keep)
+      
+      do.call(`[`, c(list(data_obj, TRUE), idx, list(drop = FALSE)))
+    }
+    
+    
+    # Subset latitudes
+    if (!is.null(lat_range)) {
+      # get name of latitudinal dimensions
+      lat_dim <- base::intersect(c("latitude", "y"),
+                                 names(stars::st_dimensions(data_obj)))[1]
+      
+      data_obj <- subset_dim(data_obj, lat_dim, lat_range)
+    }
+    
+    # Select longitude range
+    if (!is.null(lon_range)) {
+      lon_dim <- intersect(c("longitude", "x"),
+                           names(stars::st_dimensions(data_obj)))[1]
+      
+      data_obj <- subset_dim(data_obj, lon_dim, lon_range)
+    }
+    
+    # Select time range
+    if (!is.null(years)) {
+      data_obj <- subset_dim(data_obj, "year", years)
+    }
+    
+    
+    # Select time range
+    if (!is.null(months)) {
+      data_obj <- subset_dim(data_obj, "month", months)
+    }
+    
+    # Subset by shape
+    if (!is.null(shape)) {
+      shape <- sf::st_transform(shape, sf::st_crs(data_obj))
+      data_obj <- sf::st_crop(data_obj, sf::st_bbox(shape))
+      data_obj <- data_obj[shape]
+    }
+    
+    
+    
+  } else if (inherits(data_obj, "SpatRaster")) {
+    
+    print("In development")
+  
+  } else {
+    stop("Unsupported spatial data type for subsetting.", call. = FALSE)
+  }
+  
+  new("ea_spatial", data = data_obj, meta = x@meta)
+}
+
+
+
+
+#' Filter an `ea_spatial` Object by Attribute -- JL edit
+#'
+#' @description
+#' A helper function to subset the features or cells of an `ea_spatial` object
+#' based on the spatial or temporal dimsneions: latitude, longitude, and time. 
+#'
+#' @details
+#' This masks the `data` slot of the `ea_spatial` object, removing values from
+#' all variables outside of the specified range of the target variable. 
+#' 
+#' @param x An `ea_spatial` object.
+#' @param variable the data variable by which to subset values
+#' @param value_range vector of min and max of range of values to keep (for numeric variables)
+#' @param value_exact vector of exact values to keep (for categorical variables)
+#' 
+#' @return A new `ea_spatial` object containing only data within specified bounds.
+#'
+#'
+#' @export
+ea.subset.spatial.values <- function(x, 
+                                     variable,
+                                     value_range = NULL,
+                                     value_exact = NULL
+                                     ) {
+  
+  if (!inherits(x, "ea_spatial")) stop("x must be an ea_spatial object.", call. = FALSE)
+
+  if (!is.null(value_range)  & !is.null(value_exact)) 
+    stop("either subset by range or exact values, not both.")
+  
+  data_obj <- x@data
+  
+  if (inherits(data_obj, "sf")) {
+    
+    print("In development")
+    
+    
+  } else if (inherits(data_obj, "stars")) {
+    
+    if(!variable %in% names(data_obj)) stop("variable must be in ea_spatial object", call.=FALSE)
+  
+    values <- data_obj[[variable]]
+    
+    if (!is.null(value_range)) {
+      
+      # TRUE where values should be retained
+      keep <- values >= min(value_range) &
+        values <= max(value_range)
+      
+    } else if (!is.null(value_exact)) {
+      
+      keep <- values %in% value_exact
+      
+    } 
+    
+    if (!any(keep, na.rm=T)) {
+      stop("No coordinates within the requested range.", call.=FALSE)
+    }
+    
+    # Mask all attributes using the same spatial/temporal cells
+    keep[is.na(keep)] <- FALSE
+    
+    for (var in names(data_obj)) {
+      data_obj[[var]][!keep] <- NA
+    }
+    
+  } else if (inherits(data_obj, "SpatRaster")) {
+    
+    print("In development")
+    
+  } else {
+    stop("Unsupported spatial data type for subsetting.", call. = FALSE)
+  }
+  
+  new("ea_spatial", data = data_obj, meta = x@meta)
 }

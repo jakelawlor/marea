@@ -15,7 +15,8 @@
 #' @param clim.dat For "anomaly" style: climatology data for contour overlay
 #' @param coastline logical. Should coastline layer be plotted? (default: TRUE)
 #' @param coastline_region Character or numeric vector. Region for coastline:
-#'   - "nw_atlantic" (default): Northwest Atlantic
+#'   - "shape" (default): to the bounding box of the spatial data
+#'   - "nw_atlantic": Northwest Atlantic
 #'   - "pacific": Pacific region
 #'   - "gsl": Gulf of St. Lawrence
 #'   - "arctic": Arctic region
@@ -41,7 +42,7 @@ setMethod("plot", signature(x = "ea_spatial", y = "missing"),
                    years.plot = NULL,
                    clim.dat = NULL,
                    coastline = TRUE,
-                   coastline_region = "nw_atlantic",
+                   coastline_region = "shape",
                    coastline_color = "darkgrey",
                    coastline_fill = "grey90",
                    coastline_size = 0.3,
@@ -49,6 +50,8 @@ setMethod("plot", signature(x = "ea_spatial", y = "missing"),
                    eez = TRUE,
                    eez_data = NULL,
                    resolution = 6000,
+                   value_col = NULL,
+                   contour.time = NULL,
                    ...) {
             
             df <- x@data
@@ -59,7 +62,7 @@ setMethod("plot", signature(x = "ea_spatial", y = "missing"),
             if (missing(style)) stop("Must provide style argument!", call. = FALSE)
             # Get data extent for coastline cropping
             if (inherits(df, "stars")) {
-              df <- prepare_stars_data(df)
+              df <- prepare_stars_data(df, value_col)
               # Get bbox differently for stars
               data_bbox <- sf::st_bbox(sf::st_as_sf(df, as_points = FALSE))
             } else {
@@ -105,8 +108,12 @@ setMethod("plot", signature(x = "ea_spatial", y = "missing"),
               },
               
               contour = {
+                
+                if(is.null(contour.time)) stop("Select contour.time value: timestep, or aggregate", call.=F)
+                
                 # The helper function is responsible for handling data types
-                create_contour_plot(df, meta, ...)
+                create_contour_plot_JL(df, meta, contour.time, ...)
+                
               },
               
               bubble = {
@@ -158,6 +165,7 @@ get_coastline_data <- function(region, data_bbox, resolution = "medium") {
 
   # Define region bounding boxes
   region_boxes <- list(
+    shape = c(data_bbox$xmin, data_bbox$xmax, data_bbox$ymin, data_bbox$ymax),
     nw_atlantic = c(xmin = -68, xmax = -54, ymin = 40, ymax = 48),
     pacific = c(xmin = -180, xmax = -100, ymin = 30, ymax = 65),
     gsl = c(xmin = -72, xmax = -55, ymin = 45, ymax = 52),
@@ -341,6 +349,100 @@ create_contour_plot <- function(df, meta, ...) {
     ggplot2::geom_contour_filled(ggplot2::aes(fill = after_stat(level)), ...) +
     ggplot2::geom_contour(color = "black", ...) +
     ggplot2::scale_fill_viridis_d(name = meta$units, option = "plasma")
+}
+
+# Helper function for contour plots -- JL EDIT
+create_contour_plot_JL <- function(df, meta, contour.time, ...) {
+  
+  if(inherits(df,"spatRaster")){
+    print("In Development.")
+  }
+  
+  if(inherits(df,"sf")){
+    print("In Development.")
+  }
+  
+  if (inherits(df, "stars")) {
+    
+    if(contour.time == "aggregate"){
+      
+      # create contours with stars native:
+      spatial_dims <- intersect(c("x","y","latitude","longitude"),names(stars::st_dimensions(df)))
+      s_mean <- stars::st_apply(df["value"], spatial_dims, mean, na.rm = TRUE)
+      names(s_mean) <- "value"
+      
+      min <- as.numeric(floor(min(s_mean$value, na.rm=T)))
+      max <- as.numeric(ceiling(max(s_mean$value, na.rm=T)))
+      
+      if((max-min)<15){
+        breaks <-  seq(min, max)
+      } else {
+        breaks <- seq(min, max, length.out=15) %>% round()
+      }
+      
+      contours <- stars::st_contour(s_mean, breaks = breaks)
+      
+      # plot
+      ggplot2::ggplot() +
+        ggplot2::geom_sf(data = contours,
+                         ggplot2::aes(fill = .data$value)) +
+        ggplot2::scale_fill_viridis_d() +
+        ggplot2::coord_sf()
+      
+    } else if (contour.time == "timestep"){
+
+      # get time values
+      times <- stars::st_get_dimension_values(df, "time")
+      
+      min <- as.numeric(floor(min(df$value, na.rm=T)))
+      max <- as.numeric(ceiling(max(df$value, na.rm=T)))
+      
+      if((max-min)<15){
+        breaks <-  seq(min, max)
+      } else {
+        breaks <- seq(min, max, length.out=15) %>% round()
+      }
+      
+      
+      # generate contours for every timestep
+      contours <- lapply(seq_along(times), function(i) {
+        
+        # extract 2D spatial slice
+        slice <- df["value", , , i, drop = TRUE]
+
+        # generate contours
+        out <- stars::st_contour(
+          slice,
+          breaks = breaks
+        )
+        
+        # Retain the timestep for faceting
+        out$time <- times[i]
+        out
+      })
+      
+      
+      contours <- dplyr::bind_rows(contours)
+      
+      # get existing levels ---
+      levs <- levels(contours$value)
+      # order by lower bound
+      lower <- as.numeric(sub("^\\[([^,]+),.*", "\\1", levs))
+      contours$value <- factor(
+        contours$value,
+        levels = levs[order(lower)],
+        ordered = TRUE
+      )
+      
+      
+      # Return this ggplot object from your plotting function
+      ggplot2::ggplot(contours) +
+        ggplot2::geom_sf(ggplot2::aes(fill = .data$value)) +
+        ggplot2::scale_fill_viridis_d() +
+        ggplot2::coord_sf()
+      
+    }
+  }
 }
 
 # Helper function for anomaly plots
@@ -604,13 +706,33 @@ add_climatology_contours <- function(p, contour.dat, contour_type) {
 }
 
 # Helper function to prepare stars data for plotting
-prepare_stars_data <- function(stars_obj) {
+prepare_stars_data <- function(stars_obj, value_col) {
   # Get the first attribute name if no 'value' attribute exists
   attr_names <- names(stars_obj)
   
-  if (!"value" %in% attr_names) {
-    # Rename first attribute to 'value' for consistency
-    names(stars_obj)[1] <- "value"
+  if (is.null(value_col)){
+    # Rename value column
+    val_ind <- grep(attr_names, pattern = '_value$')
+    
+    if (length(val_ind) == 0) {
+      stop("No value column found in data. Value column must end with '_value'.", call. = FALSE)
+    } else if (length(val_ind) > 1) {
+      warning("Multiple value columns found. Using the first one: ", attr_names[val_ind[1]], call. = FALSE)
+      
+      names(stars_obj)[val_ind[1]] <- "value"
+
+    } else {
+      names(stars_obj)[val_ind] <- "value"
+    }
+  } else{
+
+    names(stars_obj)[which(names(stars_obj) == value_col)] <- "value"
+    
+  }
+  
+  # remove units
+  if(!is.null(attr(stars_obj$value,"units"))){
+    stars_obj[["value"]] <- units::drop_units(stars_obj[["value"]])
   }
   
   return(stars_obj)

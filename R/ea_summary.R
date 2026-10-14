@@ -45,10 +45,21 @@ ea.summary <- function(x, ...) {
      cat("  Time:      ", x@meta$time_descriptor, "\n")
      cat("  Source:    ", x@meta$source_citation, "\n\n")
 
-     cat("Spatial Information (from sf):\n")
-     # Print the bounding box and CRS from the underlying sf object
-     print(sf::st_geometry(x@data))
-     cat("\n")
+     
+     if(inherits(x@data, "sf")){
+       cat("Spatial Information (from sf):\n")
+       # Print the bounding box and CRS from the underlying sf object
+       print(sf::st_geometry(x@data))
+       cat("\n")
+     } else if(inherits(x@data, "stars")){
+       cat("Spatial Summary (from stars):\n")
+       # Print the bounding box and CRS from the underlying sf object
+       print(summary(x@data))
+       print(paste0("CRS: ",sf::st_crs(x@data)$input))
+       print(sf::st_bbox(x@data))
+       print(stars::st_dimensions(x@data))
+       cat("\n")
+     }
 
      # If there's a time_descriptor column, show unique values
      if ("time_descriptor" %in% names(x@data)) {

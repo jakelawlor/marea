@@ -14,7 +14,7 @@ plot(x, y, ...)
   years.plot = NULL,
   clim.dat = NULL,
   coastline = TRUE,
-  coastline_region = "nw_atlantic",
+  coastline_region = "shape",
   coastline_color = "darkgrey",
   coastline_fill = "grey90",
   coastline_size = 0.3,
@@ -22,6 +22,7 @@ plot(x, y, ...)
   eez = TRUE,
   eez_data = NULL,
   resolution = 6000,
+  value_col = NULL,
   ...
 )
 }
@@ -44,7 +45,8 @@ plot(x, y, ...)
 
 \item{coastline_region}{Character or numeric vector. Region for coastline:
 \itemize{
-\item "nw_atlantic" (default): Northwest Atlantic
+\item "shape" (default): to the bounding box of the spatial data
+\item "nw_atlantic": Northwest Atlantic
 \item "pacific": Pacific region
 \item "gsl": Gulf of St. Lawrence
 \item "arctic": Arctic region
