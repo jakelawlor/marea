@@ -1,0 +1,159 @@
+---
+title: "Using marea Spatial Data"
+author: "Jake Lawlor"
+date: '`r Sys.Date()`'
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: cerulean
+vignette: >
+  %\VignetteIndexEntry{Spatial Data Extraction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE, warning=FALSE}
+library(marea)
+library(stars)
+library(sf)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+```
+
+## Introduction
+
+In this vignette, we will demonstrate how to access and manipulate spatial objects from the `marea` package. While spatial data can also be stored as `sf` or `spatRaster` objects in `marea`, the two datasets provided by default are `stars` objects for stable saving and manipulation. Here, we demonstrate how to access, subset by spatial or temporal dimensions, and visualize spatial data.
+
+## Upload Spatial Data
+
+```{r}
+data("satellite_ocean_colour")
+ea.summary(satellite_ocean_colour)
+```
+
+The `satellite_ocean_colour` dataset features gridded data for five variables related to algal blooms in the Northwest Atlantic. By default, the `stars` data object features data from 341 longitudes, 270 latitudes, and 28 timesteps (here, years).
+
+```{r, warning=FALSE}
+plot(satellite_ocean_colour["t_start_value"], style = "fill",) + 
+  scale_fill_viridis_c(na.value = "transparent") +
+  labs(fill = "t_start")
+```
+
+## Subset by Dimensions
+
+`ea.subset.spatial.dims()` allows filtration of data by spatial and temporal dimensions: latitude, longitude, year, and -- when applicable -- month. For example, to subset an `ea_spatial` object to a specificed latitudinal and longitudinal range at only select years, we could use:
+
+### Specify Dimensions
+
+```{r, warning=FALSE}
+satellite_ocean_colour_2 <- ea.subset.spatial.dims(satellite_ocean_colour,
+                                                   lat_range = c(37,46),
+                                                   lon_range = c(-65,-55),
+                                                   years = c(2015, 2020, 2025))
+
+plot(satellite_ocean_colour_2, style = "fill",
+     value_col = "amplitude_real_value") + 
+  scale_fill_viridis_c(na.value = "transparent") +
+  labs(fill = "amplitude")
+```
+
+### Specify Shape
+
+The same function allows us to subset spatially to a region of focus using th input of an external `sf` spatial shape. Below, we show filtration to the lobster fishing area 33 from the `Mar.data` package.
+
+```{r, warning=FALSE}
+
+# get sf shape from Mar.data package:
+
+library(Mar.data) # available from https://github.com/PopulationEcologyDivision/Mar.data
+
+data("LFAs_sf")
+
+lfa_33 <- LFAs_sf %>%
+  filter(LFA == "33") %>%
+  st_transform(crs = st_crs(satellite_ocean_colour@data)) # use same CRS as the data for spatial operations
+
+
+# subset to LFA 33 shape
+satellite_ocean_colour_3 <- ea.subset.spatial.dims(satellite_ocean_colour,
+                                                   shape = lfa_33,
+                                                   years = c(2000, 2005, 2010, 2015, 2020, 2025))
+
+# plot
+plot(satellite_ocean_colour_3, style = "fill", value_col = "amplitude_real_value") + 
+  scale_fill_viridis_c(na.value = "transparent") +
+  labs(fill = "amplitude") + 
+  geom_sf(data = lfa_33, 
+          color = "red",
+          fill = "transparent",
+          linewidth = 1)
+```
+
+### Subset by Values
+
+In other cases, we might want to subset by the values of one or more variables in the dataset, as opposed to attributes, in which case we use `ea.subset.spatial.values()`. This functiion masks all variables in the dataset by values of the selected variable.
+
+```{r, warning=FALSE}
+
+satellite_ocean_colour_4 <- ea.subset.spatial.values(satellite_ocean_colour_3,
+                                                   variable = "t_start_value",
+                                                   value_range = c(1,70))
+
+
+plot(satellite_ocean_colour_4, style = "fill", value_col = "amplitude_real_value") + 
+  scale_fill_viridis_c(na.value = "transparent") +
+  labs(fill = "amplitude") + 
+  geom_sf(data = lfa_33, 
+          color = "red",
+          fill = "transparent",
+          linewidth = 1) + 
+  facet_wrap(~time)
+```
+
+### Contour Plots
+
+Default marea spatial plotting funcitons allow for style 'contour', which creates sf shapes around contours of spatial data values. Contour plots can be either of two `contour.time` values: "aggregate", for contours of mean values across timesteps, or "timestep" for contoours within each time layer.
+
+Example 1: average temperature bands
+
+```{r, warning=FALSE}
+
+data("glorys_bottom_temperature")
+plot(glorys_bottom_temperature, style = "contour", contour.time = "aggregate")
+
+```
+
+Example 2: July temperature bands in LFA33
+
+```{r, warning=FALSE}
+
+# subset to july within LFA33
+glorys_sub <- ea.subset.spatial.dims(
+  glorys_bottom_temperature,
+  years = seq(2016, 2026, by = 2),
+  months = 7,
+  shape = lfa_33
+)
+
+plot(glorys_sub, style = "contour", contour.time = "timestep") +
+  # add shape
+  geom_sf(data = lfa_33, color = "red", fill = "transparent") +
+  # facet by timestep
+  facet_wrap(~time) +
+  labs(fill = "July Bottom Temperature") 
+
+```
+
+## Saving marea spatial
+
+`marea` sptaial functions are compatible with spatial data in multiple formats for intermediate object creation and manipulation: `sf`, `spatRaster`, and `stars`. But saving data in `marea` is most compatible with `stars` data. For example, spatial obejcts saved to the disk (or in the package) through `terraa` require external C++ pointer referece objects, which disconnect from their sources when using `save.rds()` or `save.rda()`. A solution to this issue is using `terra::wrap()` before saving, and `terra::unwrap()` after loading, whereas `stars` or `sf` objects are directly loadable.

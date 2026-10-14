@@ -20,8 +20,8 @@ library(tidyverse)
 library(sf)
 library(cmocean) # for colour scales
 library(Mar.data) # available from https://github.com/PopulationEcologyDivision/Mar.data
+library(stars)
 ```
-
 
 ## Introduction
 
@@ -29,20 +29,19 @@ In this vignette, we will demonstrate how to extract data from the `marea` packa
 
 ## Useful tools
 
-- `marea` provides curated spatial datasets
+-   `marea` provides curated spatial datasets
 
-- `sf` standard for handling spatial data, coordinate reference systems and spatial filtering
+-   `sf` standard for handling spatial data, coordinate reference systems and spatial filtering
 
-- `tidyverse` for data manipulation
+-   `tidyverse` for data manipulation
 
-- `ggplot2` for plotting spatial data
-
+-   `ggplot2` for plotting spatial data
 
 ## Example: Extracting Data for a Specific Region
 
 ### load in a spatial dataset
 
-First we will load in an example of a spatial dataset from marea. For this example we will use glorys bottom temperature. 
+First we will load in an example of a spatial dataset from marea. For this example we will use glorys bottom temperature.
 
 ```{r}
 data("glorys_bottom_temperature")
@@ -82,7 +81,6 @@ area_subset <- glorys_bottom_temperature@data %>%
 
 ```
 
-
 Let's visualize the extraction to verify it worked
 
 ```{r}
@@ -112,10 +110,3 @@ ggplot() +
     panel.grid.major = element_line(color = "grey95")
   )
 ```
-
-
-
-
-
-
-

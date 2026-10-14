@@ -21,30 +21,24 @@ library(marea)
 library(tidyverse)
 ```
 
-
 ## Introduction
 
-The `marea` package is built around robust S4 class objects:  
-- **ea_data** for time series/tabular data  
+The `marea` package is built around robust S4 class objects:\
+- **ea_data** for time series/tabular data\
 - **ea_spatial** for spatio-temporal or gridded data
 
 This makes all `marea` datasets work the same – easy for plotting, inspecting, and analysis.
 
----
+------------------------------------------------------------------------
 
 ## What is a "Class" in `marea`?
 
-An R "class" defines _how_ an object behaves.  
-Classes allow `marea` to automatically:
-- Store rich metadata with each dataset
-- Print, summarize, or plot datasets using custom methods
-- Guarantee consistent, predictable structures (for you and collaborators)
+An R "class" defines *how* an object behaves.\
+Classes allow `marea` to automatically: - Store rich metadata with each dataset - Print, summarize, or plot datasets using custom methods - Guarantee consistent, predictable structures (for you and collaborators)
 
-The two core classes are:
-- `ea_data`: 1D/tabular/time series (e.g. abundances, environmental indices)
-- `ea_spatial`: gridded or spatial/time-varying fields (e.g. maps of temperature)
+The two core classes are: - `ea_data`: 1D/tabular/time series (e.g. abundances, environmental indices) - `ea_spatial`: gridded or spatial/time-varying fields (e.g. maps of temperature)
 
----
+------------------------------------------------------------------------
 
 ## ea_data: Clean, Consistent Time Series
 
@@ -60,19 +54,13 @@ data("grey_seals")
 ea.print(grey_seals)
 ```
 
-**Example output:**  
+**Example output:**
 
---- Ecosystem Approach (EA) Data Object ---
-Class:           ea_data 
-Data Type:       Estimated abundance (number of seals, 1000s) 
+--- Ecosystem Approach (EA) Data Object --- Class: ea_data Data Type: Estimated abundance (number of seals, 1000s)
 
 Data preview:
 
-A tibble: 6 × 4
-year   low median  high
-<dbl> <dbl>  <dbl> <dbl>
-1  1960   ...   ...   ...
-2  ...    ...   ...   ...
+A tibble: 6 × 4 year low median high <dbl> <dbl> <dbl> <dbl> 1 1960 ... ... ... 2 ... ... ... ...
 
 ### Data summary
 
@@ -80,7 +68,7 @@ year   low median  high
 ea.summary(grey_seals)
 ```
 
----
+------------------------------------------------------------------------
 
 ## Plotting: One-line Visualization
 
@@ -90,31 +78,28 @@ Plotting works out-of-the-box and returns a `ggplot2` object:
 # plot(grey_seals)
 ```
 
-
 If columns like `"lower"` and `"upper"` exist, add ribbons easily:
 
 ```{r}
 # plot(grey_seals, style = "ribbon")
 ```
 
-The style argument can be specified to return different plot types, this can
-provide a range of reasonable defaults for different data sets.
-
+The style argument can be specified to return different plot types, this can provide a range of reasonable defaults for different data sets.
 
 Other styles: `"default"`, `"plain"`, `"anomaly"`, etc.
 
 These are ggplot objects and are easy to add on to with the `+` syntax (See advanced examples)
 
-
----
+------------------------------------------------------------------------
 
 ## ea_spatial: Spatio-Temporal/Gridded Data
 
-Spatial (or spatio-temporal) objects are stored as **ea_spatial**. These have some flexibility and the data slot can house an sf objects, a stars or terra object. 
+Spatial (or spatio-temporal) objects are stored as **ea_spatial**. These have some flexibility and the data slot can house an sf objects, a stars or terra object.
 
 ### Example: Inspect a spatial object
 
 ```{r}
+library(stars)
 data("glorys_bottom_temperature")
 ea.summary(glorys_bottom_temperature)
 ```
@@ -127,13 +112,9 @@ ea.summary(glorys_bottom_temperature)
 # plot(glorys_bottom_temperature)
 ```
 
-The style argument can be used to specify some reasonable spatial default styles.
-There are also many other arguments for specifying details about coastline objects, regions, and other considerations. See `?plot.ea_spatial` for more details.
-Other options:
-- `style = "contour"`   (contour lines)
-- `style = "bubble"`    (bubbles by value)
+The style argument can be used to specify some reasonable spatial default styles. There are also many other arguments for specifying details about coastline objects, regions, and other considerations. See `?plot.ea_spatial` for more details. Other options: - `style = "contour"` (contour lines) - `style = "bubble"` (bubbles by value)
 
----
+------------------------------------------------------------------------
 
 ## Interoperability: Converting from `pacea` and Other Packages
 
@@ -167,13 +148,13 @@ print(hake_biomass_ea)
 
 ```
 
----
+------------------------------------------------------------------------
 
 ## Creating your own ea objects
 
 While marea provides many built-in datasets, you'll often want to create your own objects from scratch. This section demonstrates how to build ea_data and ea_spatial objects using the constructor functions.
 
-###  Create an ea_data Object
+### Create an ea_data Object
 
 The `ea_data()` constructor allows you to create time series objects from any data frame. Here's how:
 
@@ -263,21 +244,19 @@ chl_spatial <- ea_spatial(
 ea.print(chl_spatial)
 ```
 
-
 ## Accessing Data and Metadata: The S4 Structure
 
-Once you have an ea_data object, you might want to extract specific pieces of information, like the raw data frame or a single metadata value. Because ea_data is an S4 object, there are two primary ways to do this: the standard @ operator for direct slot access, and a custom [[ method for more flexible and convenient access.
+Once you have an ea_data object, you might want to extract specific pieces of information, like the raw data frame or a single metadata value. Because ea_data is an S4 object, there are two primary ways to do this: the standard \@ operator for direct slot access, and a custom [[ method for more flexible and convenient access.
 
 An ea_data object has two main "slots":
 
- - meta: A list that holds all the metadata (e.g., region, units, source_citation).
- 
- - data: A tibble that contains the time series data (with year, value, and other columns).
- 
-### Using the @ Operator (Direct Slot Access)
+-   meta: A list that holds all the metadata (e.g., region, units, source_citation).
 
-The @ operator is the standard way to access slots in any S4 object. You can use it to pull out the entire meta list or the data tibble.
+-   data: A tibble that contains the time series data (with year, value, and other columns).
 
+### Using the \@ Operator (Direct Slot Access)
+
+The \@ operator is the standard way to access slots in any S4 object. You can use it to pull out the entire meta list or the data tibble.
 
 ```{r}
 # Use the halifax_temp object created earlier
@@ -287,13 +266,14 @@ halifax_temp@meta
 # Access the entire data tibble
 halifax_temp@data
 ```
+
 This method is direct and explicit but requires you to know the exact slot names. To get a single metadata item, you would need to chain operators, like `halifax_temp@meta$region`.
 
 ### Using the [[ Method (Convenient Access)
 
 To make life easier, marea provides a custom [[ method. This powerful shortcut lets you access the entire meta or data slots, as well as individual items within them, using a single, consistent syntax.
 
-The [[ method first checks if you are asking for "meta" or "data". If not, it checks if the name you provided exists in the meta slot. If it's not there, it finally checks if it's a column name in` the data slot.
+The [[ method first checks if you are asking for "meta" or "data". If not, it checks if the name you provided exists in the meta slot. If it's not there, it finally checks if it's a column name in\` the data slot.
 
 ```{r}
 # Get the entire meta list (same as @meta)
@@ -309,9 +289,7 @@ halifax_temp[["data"]]
 halifax_temp[["year"]]
 ```
 
-This approach is generally recommended as it provides a single, intuitive interface for retrieving almost any piece of information from an ea_data object without needing to remember the underlying @ syntax.
-
-
+This approach is generally recommended as it provides a single, intuitive interface for retrieving almost any piece of information from an ea_data object without needing to remember the underlying \@ syntax.
 
 ## Key Constructor Parameters
 
@@ -319,23 +297,23 @@ Both constructors share common metadata fields:
 
 ### Required parameters:
 
-- data: Your data frame (for ea_data) or sf/stars/terra spatraster object (for ea_spatial)
+-   data: Your data frame (for ea_data) or sf/stars/terra spatraster object (for ea_spatial)
 
-- value_col: Name of the column containing the primary values
+-   value_col: Name of the column containing the primary values
 
-- data_type: Description of what the data represents
+-   data_type: Description of what the data represents
 
-- region: Geographic region or NAFO/DFO area name
+-   region: Geographic region or NAFO/DFO area name
 
-- units: Units for the value column
+-   units: Units for the value column
 
-- source_citation: Where the data came from
+-   source_citation: Where the data came from
 
 ### ea_data specific:
 
-- location_descriptor: Specific location identifier
+-   location_descriptor: Specific location identifier
 
-- species: Species name (optional, for biological data)
+-   species: Species name (optional, for biological data)
 
 ### ea_spatial specific:
 
@@ -343,33 +321,31 @@ time_descriptor: Description of the temporal aspect
 
 ### Additional metadata:
 
-- You can add any custom metadata fields as named arguments (e.g., fishing_season, assessment_year)
-
+-   You can add any custom metadata fields as named arguments (e.g., fishing_season, assessment_year)
 
 ## Tips for creating objects
 
-1. Value column naming: The constructor automatically renames your specified column to value internally, so all methods work consistently.
+1.  Value column naming: The constructor automatically renames your specified column to value internally, so all methods work consistently.
 
-2. Metadata travels: All metadata is preserved through subsetting and plotting operations.
+2.  Metadata travels: All metadata is preserved through subsetting and plotting operations.
 
-3. Validation: Constructors validate inputs and provide helpful error messages.
+3.  Validation: Constructors validate inputs and provide helpful error messages.
 
-4. Extensibility: Add custom metadata fields for your specific use case.
+4.  Extensibility: Add custom metadata fields for your specific use case.
 
 ## Why Use These Classes?
 
-Using robust S4 classes brings multiple benefits:
-- All datasets behave the same way (easy to plot, inspect, or summarize)
-- Metadata (units, region, source, etc.) always travel with the data
-- You can use base R summary/print/plot methods or build your own analyses on top
+Using robust S4 classes brings multiple benefits: - All datasets behave the same way (easy to plot, inspect, or summarize) - Metadata (units, region, source, etc.) always travel with the data - You can use base R summary/print/plot methods or build your own analyses on top
 
----
+------------------------------------------------------------------------
 
 ## Learn More
 
-- The main [README](../README.html) has a quick start
-- Plotting EA classes vignette
----
+-   The main [README](../README.html) has a quick start
+
+-   
+
+    ## Plotting EA classes vignette
 
 ## Citing `marea`
 
@@ -379,8 +355,8 @@ Please cite the package in your work. For citation text:
 citation("marea")
 ```
 
----
+------------------------------------------------------------------------
 
 *This vignette was generated using the `marea` source code (2025-07-24).*
 
----
+------------------------------------------------------------------------

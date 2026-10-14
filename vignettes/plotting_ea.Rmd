@@ -15,13 +15,14 @@ vignette: >
 ---
 
 # Plotting with marea
+
 ## A comprehensive guide to visualizing ecosystem data
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "man/figures/README-",
+ # fig.path = "man/figures/README-",
   out.width = "100%"
 )
 ```
@@ -47,8 +48,6 @@ data(nao)
 plot(nao)
 ```
 
-
-
 # Time Series Data: The ea_data Class
 
 ## Available Plot Styles
@@ -62,6 +61,7 @@ Basic line plot with points:
 ```{r}
 plot(nao, style = "default")
 ```
+
 ### Ribbon Style
 
 Shows uncertainty bounds (requires lower and upper columns):
@@ -95,6 +95,18 @@ Special style for biomass data with bold lines and uncertainty:
 
 ```{r}
 plot(grey_seals, style = "biomass")
+```
+
+### Heatmap Style
+
+Tile plot showing sequential values by color.
+
+```{r}
+
+data("azmp_bottom_temperature")
+plot(azmp_bottom_temperature, style = "heatmap") + 
+  ggplot2::aes(y = region)
+
 ```
 
 # Customizing Time Series Plots
@@ -185,7 +197,6 @@ glorys_2024 <- ea.subset.spatial(glorys_bottom_temperature, 'year', 2024)
 
 ```
 
-
 ## Available Spatial Plot Styles
 
 ### Fill Style
@@ -195,8 +206,6 @@ Color-coded spatial maps:
 ```{r, eval = FALSE}
 plot(glorys_2024, style = "fill")
 ```
-
-
 
 ### Contour Style
 
@@ -279,7 +288,6 @@ Create correlation plots:
 
 This example shows how to compare multiple datasets side by side using base R graphics. This is useful for visualizing trends across different datasets in a single view.
 
-
 Compare different datasets side by side:
 
 ```{r, eval = FALSE}
@@ -349,14 +357,11 @@ require(patchwork)
 
 ```
 
-
 # Advanced Customization
 
-Since our ea class objectse are consistent in their structure and naming, 
-it is easier for you to create your own custom function as well. 
+Since our ea class objectse are consistent in their structure and naming, it is easier for you to create your own custom function as well.
 
-Plotting functions can be a great way to produce publication quality plots with consistnet theme and 
-colour elements.
+Plotting functions can be a great way to produce publication quality plots with consistnet theme and colour elements.
 
 ## Custom Color Schemes
 
@@ -455,10 +460,9 @@ ggsave("grey_seals_trends.pdf", pub_plot,
        width = 8, height = 6)
 ```
 
-
 # Tips and best practices
 
-1. Check Data structure first
+1.  Check Data structure first
 
 ```{r, eval = FALSE}
 # Always inspect your data first
@@ -467,14 +471,14 @@ ea.summary(nao)
 str(nao@data)
 ```
 
-2. Use Appropriate Styles
+2.  Use Appropriate Styles
 
-- Time series: Use "default" or "ribbon" for most cases
-- Anomalies: Use "anomaly" style for climate indices
-- Biomass: Use "biomass" style for population data
-- Spatial: Use "fill" for continuous fields, "bubble" for point data
+-   Time series: Use "default" or "ribbon" for most cases
+-   Anomalies: Use "anomaly" style for climate indices
+-   Biomass: Use "biomass" style for population data
+-   Spatial: Use "fill" for continuous fields, "bubble" for point data
 
-3. Customize gradually
+3.  Customize gradually
 
 ```{r}
 # Start simple
@@ -489,7 +493,7 @@ p4 <- p3 + geom_smooth(method = "loess", se = FALSE)
 p4
 ```
 
-4. Consistent styling
+4.  Consistent styling
 
 ```{r, eval = FALSE}
 # Create a custom theme for all your plots
@@ -506,8 +510,6 @@ plot(nao) + my_theme
 
 # Getting Help
 
-
-
 ## Plot Method Documentation
 
 ```{r, eval = FALSE}
@@ -523,4 +525,3 @@ plot(nao) + my_theme
 # Cite the package in your work
 citation("marea")
 ```
-
