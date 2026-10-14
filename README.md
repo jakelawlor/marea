@@ -60,7 +60,11 @@ library(marea)
 
 ``` r
 library(ggplot2) # For customization
+```
 
+    ## Warning: package 'ggplot2' was built under R version 4.4.3
+
+``` r
 # 1. Load a dataset of interest (e.g., grey seal abundance)
 data("grey_seals")
 
@@ -121,24 +125,31 @@ kable(marea_metadata())
 
 | Dataset | Region | TimeSpan | Source |
 |:---|:---|:---|:---|
-| amo | Northern Hemisphere (0-60N) | 1854-2025 | NOAA , <https://www1.ncdc.noaa.gov/pub/data/cmb/ersst/v5/index/ersst.v5.amo.dat> |
-| ao | Northern Hemisphere | 1950-2025 | NOAA CPC, <https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/> |
-| azmp_bottom_temperature | Scotian Shelf (4X, 4V, 4W) | 1950-2024 | DFO Atlantic Zone Monitoring Program via azmpdata |
-| azmp_salinity | Scotian Shelf (4X, 4V, 4W) | 1948-2024 | DFO Atlantic Zone Monitoring Program via azmpdata |
-| azmp_satellite_temperature | Scotian Shelf (4X, 4V, 4W) | 1982-2024 | DFO Atlantic Zone Monitoring Program via azmpdata |
-| azmp_stratification | Scotian Shelf (4X, 4V, 4W) | 1948-2024 | DFO Atlantic Zone Monitoring Program via azmpdata |
-| azmp_surface_temperature | Scotian Shelf (4X, 4V, 4W) | 1948-2024 | DFO Atlantic Zone Monitoring Program via azmpdata |
+| amo | Northern Hemisphere (0-60N) | 1854-2026 | NOAA , <https://www1.ncdc.noaa.gov/pub/data/cmb/ersst/v5/index/ersst.v5.amo.dat> |
+| ao | Northern Hemisphere | 1950-2026 | NOAA CPC, <https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/> |
+| azmp_bottom_temperature | Scotian Shelf (4X, 4V, 4W) | 1950-2024 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_carbonate | Scotian Shelf (4X, 4V, 4W) | 2014-2024 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_chemical | Cabot strait Line, Louisbourg Line, Halifax Line, Browns Bank Line | 1999-2024 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_phytoplankton | Halifax2 and Prince5 stations | 1999-2023 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_remotesensing | Cabot Strait, Eastern Scotian Shelf, Central Scotian Shelf, Western Scotian Shelf, Georges Bank, Lower Shelf | 2003-2020 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_salinity | Scotian Shelf (4X, 4V, 4W) | 1948-2024 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_satellite_temperature | Scotian Shelf (4X, 4V, 4W) | 1982-2024 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_stratification | Scotian Shelf (4X, 4V, 4W) | 1948-2024 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_surface_temperature | Scotian Shelf (4X, 4V, 4W) | 1948-2024 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
+| azmp_zooplankton | Cabot Strait Line, Louisbourg Line, Halifax Line, Browns Bank Line | 1999-2024 | DFO Atlantic Zone Monitoring Program via azmpdata package (<https://casaultb.github.io/azmpdata/>) |
 | coastline | Unknown | Unknown | Unknown |
 | eco_indicators | Maritimes | 1970-2022 | Bundy et al. 2017 |
 | glorys_bottom_temperature | Northwest Atlantic | Unknown | CMEMS Global Ocean Physics Reanalysis |
 | grey_seals | Scotian Shelf | 1960-2021 | den Heyer, C. E., Mosnier, A., Stenson, G. B., Lidgard, D. C., Bowen, W. D., & Hammill, M. O. (2024). Grey seal pup production in Canada (DFO Can. Sci. Advis. Sec. Res. Doc. 2023/078). Fisheries and Oceans Canada, Canadian Science Advisory Secretariat. |
 | grey_seals_2021 | Maritimes | 1960-2021 | No citation provided |
+| mei | Equatorial Pacific | 1979-2026 | NOAA ESRL/PSL, <https://psl.noaa.gov/enso/mei/> |
 | nao | North Atlantic | 1951-2024 | NOAA NCEP via azmpdata; <https://www.ncei.noaa.gov/access/monitoring/nao/> |
-| npgo | North Pacific Gyre | 1950-2025 | Di Lorenzo et al., <http://www.o3d.org/npgo/> |
-| oni | Niño 3.4 Region (Pacific) | 1950-2025 | NOAA CPC, <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ensoyears.shtml> |
-| pdo | North Pacific | 1854-2025 | NOAA ERSST, <https://www.ncei.noaa.gov/access/monitoring/pdo/> |
+| nlci | Newfoundland and Labrador Shelf | 1950-2024 | Cyr, F. and Galbraith, P. S. 2021. A climate index for the Newfoundland and Labrador shelf, Earth Syst. Sci. Data, 13, 1807–1828, <https://doi.org/10.5194/essd-13-1807-2021> |
+| npgo | North Pacific Gyre | 1950-2026 | Di Lorenzo et al., <http://www.o3d.org/npgo/> |
+| oni | Niño 3.4 Region (Pacific) | 1950-2026 | NOAA CPC, <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ensoyears.shtml> |
+| pdo | North Pacific | 1854-2026 | NOAA ERSST, <https://www.ncei.noaa.gov/access/monitoring/pdo/> |
 | satellite_ocean_colour | Northwest Atlantic | Unknown | SOPhyE group, DFO |
-| soi | Equatorial Pacific | 1951-2025 | NOAA CPC, <https://www.cpc.ncep.noaa.gov/data/indices/soi> |
+| soi | Equatorial Pacific | 1951-2026 | NOAA CPC, <https://www.cpc.ncep.noaa.gov/data/indices/soi> |
 
 ## Documentation
 
