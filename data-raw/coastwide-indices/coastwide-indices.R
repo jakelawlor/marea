@@ -6,20 +6,30 @@ library(tibble)
 library(marea)
 
 # Helper function
-make_ea_index <- function(
-    df, value_col, data_type, region, location, units, source, species = NA_character_
-) {
-  ea_data(
-    data = df,
-    value_col = value_col,
-    data_type = data_type,
-    region = region,
-    location_descriptor = location,
-    units = units,
-    species = species,
-    source_citation = source
-  )
-}
+source("data-raw/00-data-raw-helper.R")
+
+
+# ---- NAO ----
+# remotes::install_github("casaultb/azmpdata")
+library(azmpdata)
+
+nao_new <- tibble(
+  year = azmpdata::Derived_Annual_Broadscale$year,
+  anomaly = azmpdata::Derived_Annual_Broadscale$north_atlantic_oscillation
+) %>%
+  filter(!is.na(anomaly))
+
+nao <- make_ea_index(
+  df = nao_new,
+  value_col = "anomaly",
+  data_type = "North Atlantic Oscillation Index",
+  region = "North Atlantic",
+  location = "Azores–Iceland SLP difference",
+  units = "",  # Standardized index
+  source = "NOAA NCEP via azmpdata; https://www.ncei.noaa.gov/access/monitoring/nao/"
+)
+
+usethis::use_data(nao, overwrite = TRUE)
 
 
 # ---- ONI ----
@@ -33,16 +43,19 @@ oni_new <- relocate(oni_new, year)
 oni_new$month <- as.numeric(
   factor(oni_new$month, levels = unique(oni_new$month), ordered = TRUE)
 )
+
 oni <- make_ea_index(
   df = oni_new,
-  value_col = "value",
+  value_col = c("value","anomaly"),
   data_type = "Oceanic Niño Index",
   region = "Niño 3.4 Region (Pacific)",
   location = "5°N–5°S, 120°W–170°W",
   units = "deg C anomaly",
   source = "NOAA CPC, https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ensoyears.shtml"
 )
+
 usethis::use_data(oni, overwrite = TRUE)
+
 # clean up txt file
 file.remove("oni.txt")
 
@@ -56,6 +69,7 @@ pdo_long <- tidyr::pivot_longer(pdo_raw, cols = "Jan":"Dec",
   mutate(month = as.numeric(match(month, month.abb))) %>%
   rename(year = Year) %>%
   filter(!is.na(anomaly))
+
 pdo <- make_ea_index(
   df = pdo_long,
   value_col = "anomaly",
@@ -65,7 +79,9 @@ pdo <- make_ea_index(
   units = "", # Standardized
   source = "NOAA ERSST, https://www.ncei.noaa.gov/access/monitoring/pdo/"
 )
+
 usethis::use_data(pdo, overwrite = TRUE)
+
 #clean up txt file
 file.remove("pdo.txt")
 
@@ -81,6 +97,7 @@ soi_new <- dplyr::mutate_all(soi_new, as.numeric)
 soi_long <- tidyr::pivot_longer(soi_new, cols = "JAN":"DEC", names_to = "month", values_to = "anomaly") %>%
   mutate(month = as.numeric(match(month, toupper(month.abb)))) %>%
   filter(!is.na(anomaly))
+
 soi <- make_ea_index(
   df = soi_long,
   value_col = "anomaly",
@@ -90,7 +107,9 @@ soi <- make_ea_index(
   units = "", # index
   source = "NOAA CPC, https://www.cpc.ncep.noaa.gov/data/indices/soi"
 )
+
 usethis::use_data(soi, overwrite = TRUE)
+
 # clean up txt file
 file.remove("soi.txt")
 
@@ -102,6 +121,7 @@ npgo_raw <- read.table("npgo.txt", skip = 5, as.is = TRUE, header = FALSE, fill 
   rename(year = V1, month = V2, anomaly = V3) %>%
   filter(!is.na(month)) %>%
   mutate(year = as.numeric(year))
+
 npgo <- make_ea_index(
   df = npgo_raw,
   value_col = "anomaly",
@@ -111,7 +131,9 @@ npgo <- make_ea_index(
   units = "normalized anomaly",
   source = "Di Lorenzo et al., http://www.o3d.org/npgo/"
 )
+
 usethis::use_data(npgo, overwrite = TRUE)
+
 # clean up txt file
 file.remove("npgo.txt")
 
@@ -125,6 +147,7 @@ mei_new <- mei_new[seq_len(which(mei_new$year == -999)[1] - 1), ]
 mei_long <- tidyr::pivot_longer(mei_new, cols = "1":"12", names_to = "month", values_to = "anomaly") %>%
   mutate(month = as.numeric(month), anomaly = as.numeric(anomaly)) %>%
   filter(anomaly != -999)
+
 mei <- make_ea_index(
   df = mei_long,
   value_col = "anomaly",
@@ -134,7 +157,9 @@ mei <- make_ea_index(
   units = "standardized anomaly",
   source = "NOAA ESRL/PSL, https://psl.noaa.gov/enso/mei/"
 )
+
 usethis::use_data(mei, overwrite = TRUE)
+
 # clean up txt file
 file.remove("mei.txt")
 
@@ -149,6 +174,7 @@ row.names(ao_long) <- NULL
 ao_long2 <- tidyr::pivot_longer(ao_long, cols = "Jan":"Dec", names_to = "month", values_to = "anomaly") %>%
   mutate(month = as.numeric(match(month, month.abb))) %>%
   filter(!is.na(anomaly))
+
 ao <- make_ea_index(
   df = ao_long2,
   value_col = "anomaly",
@@ -158,7 +184,9 @@ ao <- make_ea_index(
   units = "",
   source = "NOAA CPC, https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/"
 )
+
 usethis::use_data(ao, overwrite = TRUE)
+
 # clean up txt file
 file.remove("ao.txt")
 
@@ -167,17 +195,20 @@ download.file("https://www1.ncdc.noaa.gov/pub/data/cmb/ersst/v5/index/ersst.v5.a
               destfile = "amo.txt", mode = "wb", quiet = FALSE)
 amo_raw <- read.table("amo.txt", header = TRUE, fill = TRUE, skip = 1)
 amo_p <- amo_raw %>%
-  rename('year' = 'Year')
+  rename('year' = 'Year',
+         'anomaly' = 'SSTA')
 amo <- make_ea_index(
   df = amo_p,
-  value_col = "SSTA",
+  value_col = "anomaly",
   data_type = "Atlantic MultiDecadal Oscillation Index",
   region = "Northern Hemisphere (0-60N)",
   location = "North Atlantic",
   units = "",
   source = "NOAA , https://www1.ncdc.noaa.gov/pub/data/cmb/ersst/v5/index/ersst.v5.amo.dat"
 )
+
 usethis::use_data(amo, overwrite = TRUE)
+
 # clean up txt file
 file.remove("amo.txt")
 

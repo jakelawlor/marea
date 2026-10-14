@@ -36,7 +36,7 @@ Casault, B., Johnson, C.L., Devred, E., Clay, S., and Beazley, L. 2025. Chemical
 Generated from running \code{data-raw/azmpdata/azmpdat-bio-load.R}
 }
 \usage{
-azmp_phytoplankton
+data(azmp_phytoplankton)
 }
 \description{
 Phytoplankton data from AZMP monitoring program for Halifax 2 and Prince 5 stations

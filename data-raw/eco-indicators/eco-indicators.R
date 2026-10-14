@@ -9,6 +9,7 @@ library(here)
 # From Jamie C. Tam on August 1, 2025
 # updated by Emily O'Grady September 8 2025
 # updated by Jamie C. Tam on Sept 15, 2025
+# updated by Jake Lawlor on October 1, 2026
 
 # These are outputs are for two spatial levels of indicators calculated from RV Summer Ecosystem Survey data and commercial data (fisheries landings) using the Rpackage marindicators. 
 
@@ -24,38 +25,28 @@ library(here)
 # year = {2017}
 # }
 
-# This is the raw data
 
-data_dir <- 'R:/Science/BIODataSvc/SRC/marea'
-eco_indicators_strat <- file.path(data_dir, "eco_indicators_strat.csv")
-eco_indicators_strat <- read_csv(eco_indicators_strat)
-eco_indicators_nafo<- file.path(data_dir, "eco_indicators_nafo.csv")
-eco_indicators_nafo <- read_csv(eco_indicators_nafo)
-eco_indicators_esswss<-file.path(data_dir, "eco_indicators_esswss.csv")
-eco_indicators_esswss <- read_csv(eco_indicators_esswss)
 
-# data adjustments so that all files will bind
-eco_indicators_strat<-eco_indicators_strat |> 
-  # adjust ID to chr
-  mutate(ID=as.character(ID))
-
+# load raw indicator dataframes
+load("data-raw/eco-indicators/eco_indicators_nafo.Rdata")
+load("data-raw/eco-indicators/eco_indicators_esswss.Rdata")
 
 #join the 2 data frames
-join_indicators<-bind_rows(eco_indicators_nafo, eco_indicators_esswss, eco_indicators_strat) 
+join_indicators<-bind_rows(eco_indicators_nafo, eco_indicators_esswss) 
 
-# filter years -2021, and only to 2022 when the RV survey changed to the Jacques Cartier, still no conversion factors for all the species required for this analysis. 
-
-eco_indicators<-join_indicators |>
+# filter years -2021, and only to 2022 when the RV survey changed to the Jacques Cartier, 
+# still no conversion factors for all the species required for this analysis. 
+eco_indicators_new <- join_indicators |>
   rename(year=YEAR, region=ID) |> 
+  filter(year != 2021) |>
   select(!ends_with("_s")) # remove standardized data
 
-
 #create "ea_data" object with multiple value columns
-val_col_list <- names(eco_indicators)[!(names(eco_indicators) %in% c("year", "region"))]
+val_col_list <- names(eco_indicators_new)[!(names(eco_indicators_new) %in% c("year", "region"))]
 
 # Create object with additional metadata
-eco_indicators<- as_ea_data(
-  x = eco_indicators,
+eco_indicators <- as_ea_data(
+  x = eco_indicators_new,
   value_col = val_col_list, 
   data_type = "ecological",
   region = "Maritimes",
@@ -66,5 +57,7 @@ eco_indicators<- as_ea_data(
 )
 
 
-save(eco_indicators, file = here("data-raw", "eco-indicators", "eco_indicators.rda"))
 usethis::use_data(eco_indicators, overwrite = TRUE)
+
+
+

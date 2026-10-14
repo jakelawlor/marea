@@ -7,12 +7,11 @@ library(marea)
 library(here)
 library(patchwork)
 
-# specify file location, load example .csv
-fsar_fourplot_exdata <- read_csv("data-raw/fsar-example/fsar_fourplot_exdata.csv")
-
-# OR use an existing .Rdata file
+# Load .Rdata file
 load(here("data-raw", "fsar-example", "fsar_fourplot_exdata.Rdata"))
-
+fsar_fourplot_exdata <- fsar_fourplot_exdata %>%
+  rename(lower = low,
+         upper = high)
 # create ea_data() from loaded data, input metadata
 fsar_example<-ea_data(
   data=fsar_fourplot_exdata,
@@ -27,7 +26,7 @@ fsar_example<-ea_data(
 #make plots
 pF<-plot(fsar_example[
   fsar_example@data$panel.category=="Fishing" & fsar_example@data$ts.name=="Ut"
-], style="ribbon") +
+], style="ribbon",) +
   labs(title="Fishing Mortality", y="Mortality (1/yr)", subtitle="")
 
 pbiomass<-plot(fsar_example[

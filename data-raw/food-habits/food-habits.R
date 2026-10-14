@@ -62,7 +62,8 @@ priority_prey_codes <- c(
   60, # HERRING(ATLANTIC)
   2211, # PANDALUS BOREALIS
   6411, # SEA URCHIN (GREEN)
-  6400 # SEA URCHINS
+  6400
+  )# SEA URCHINS
 # rename year column for compatability with ea_data()
 food_habits<-food_habits |>
   rename(year=YEAR, region=NAFO_ZONE) 

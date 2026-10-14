@@ -39,7 +39,7 @@ Casault, B., Johnson, C.L., Devred, E., Clay, S., and Beazley, L. 2025. Chemical
 Generated from running \code{data-raw/azmpdata/azmpdat-bio-load.R}
 }
 \usage{
-azmp_chemical
+data(azmp_chemical)
 }
 \description{
 Ocean chemistry data from AZMP monitoring program CS LL HL BBL Sections

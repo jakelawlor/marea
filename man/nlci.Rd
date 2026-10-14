@@ -31,7 +31,7 @@ An \code{ea_data} object with:
 \url{https://doi.org/10.20383/101.0301}
 }
 \usage{
-nlci
+data(nlci)
 }
 \description{
 The Newfoundland and Labrador (NL) climate index aims to describe the environmental conditions on the NL shelf

@@ -37,7 +37,7 @@ Casault, B., Johnson, C.L., Devred, E., Clay, S., and Beazley, L. 2025. Chemical
 Generated from running \code{data-raw/azmpdata/azmpdat-bio-load.R}
 }
 \usage{
-azmp_remotesensing
+data(azmp_remotesensing)
 }
 \description{
 Remote sensing and bloom statistic data from AZMP reporting

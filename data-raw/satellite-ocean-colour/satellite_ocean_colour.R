@@ -1,3 +1,5 @@
+## NOTE: script does not run. See satellite_ocean_colour_dev_steph.R
+
 rm(list=ls())
 library(rerddap)
 library(sf)
@@ -113,12 +115,12 @@ dfsa <- df %>%
                                          abs(annual_mean_sanom)>stdevnum))
 bad_inds <- dfsa$anySAGTstdevnum
 bad_inds[!is.finite(bad_inds)] <- TRUE
-df[bad_inds,metrics] <- NA
+df[bad_inds,names(metrics)] <- NA
 
 #**************************
 # Convert to ea_spatial
 
-for (metric in metrics) {
+for (metric in names(metrics)) {
   
   times <- sort(unique(df$time))
   
@@ -130,7 +132,7 @@ for (metric in metrics) {
       dplyr::mutate(longitude=as.numeric(longitude), latitude=as.numeric(latitude)) %>%
       tidyterra::as_spatraster(xycols=1:2,crs="EPSG:4326")
   }) %>% do.call(what=c) %>% setNames(paste0(names(.),"_",year(as_date(times))))
-  time(r) <- times
+ terra::time(r) <- times
   
   r_ea_spatial <- as_ea_spatial(
     x = r,
@@ -151,5 +153,6 @@ for (metric in metrics) {
   # Save the data with the metric name
   do.call(usethis::use_data, list(as.name(metric), overwrite = TRUE, internal = FALSE))
   
-  }
+}
 
+load("data/NRMSE_bloom.rda")

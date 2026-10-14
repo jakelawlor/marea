@@ -32,7 +32,7 @@ Galbraith, P.S., Lizotte, M., Blais, M., Bélanger, D., Casault, B., Coyne, J., 
 Generated from running \code{data-raw/azmpdata/azmpdata-load.R}
 }
 \usage{
-azmp_satellite_temperature
+data(azmp_satellite_temperature)
 }
 \description{
 Sea surface temperature (SST) from satellite data for the Scotian Shelf, covering NAFO Divisions 4X, 4V, and 4W. Data are averaged from satellite observations and are crucial for fisheries and climate analyses.
