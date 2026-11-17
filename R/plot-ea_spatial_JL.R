@@ -1,4 +1,43 @@
-JL <- function(x,
+#' @title Plot an ea_spatial object with multiple styles
+#' @rdname plot-ea_spatial
+#' @description
+#' Creates a spatial plot for an `ea_spatial` object. Styles:
+#'   * "fill": gridded data filled by value (also accepts "default")
+#'   * "contour": contour lines of value; either by timestep or timeseries average.
+#'   * "area": solid shape for all non-NA values (for pairing with ea.subset.spatial.values())
+#'   * "bubble": bubble plot (point size ∝ value)
+#'
+#' @param x An `ea_spatial` object.
+#' @param y Ignored. Included for S4 generic consistency.
+#' @param style Character; one of "fill", "contour", "area", or "bubble".
+#' @param coastline logical. Should coastline layer be plotted? (default: TRUE)
+#' @param coastline_region Character or numeric vector. Region for coastline:
+#'   - "shape": to the bounding box of the spatial data object
+#'   - "nw_atlantic": Northwest Atlantic
+#'   - "pacific": Pacific region
+#'   - "gsl": Gulf of St. Lawrence
+#'   - "arctic": Arctic region
+#'   - c(xmin, xmax, ymin, ymax): Custom bounding box
+#'   - blank: defaults to a 5° buffer around spatial data object
+#' @param coastline_color Color for coastline (default: "darkgrey")
+#' @param coastline_fill Fill color for land (default: "grey90")
+#' @param coastline_size Line width for coastline (default: 0.3)
+#' @param coastline_resolution Resolution for coastline data: "low", "medium", "high" (default: "medium")
+#' @param value_col if applicable, the column within the spatial data to plot
+#' @param contour.type Character; type of contour to plot:
+#'    - "timestep": creates a contour per time step in spatial dat
+#'    - "aggregate": creates a contour of timeseries-averaged values
+#' @param contour.bw Bin width of contour plots
+#' @param ... Additional args passed to the geoms.
+#' @return A ggplot object.
+#' 
+setGeneric("plot")
+
+#' @rdname plot-ea_spatial
+#' @export
+
+setMethod("plot", signature(x = "ea_spatial", y = "missing"),
+          function(x,
                style = c("fill", "default", "contour", "area"),
                coastline = TRUE,
                coastline_region = NULL,
@@ -69,7 +108,7 @@ JL <- function(x,
   
   
   return(p)
-}
+})
 
 
 # add common labels to plot
