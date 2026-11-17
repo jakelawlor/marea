@@ -482,17 +482,73 @@ ea.subset.spatial.dims <- function(x,
                                    shape = NULL) {
   
   if (!inherits(x, "ea_spatial")) stop("x must be an ea_spatial object.", call. = FALSE)
-
+  
   if ((!is.null(lat_range) | !is.null(lon_range)) & !is.null(shape)) 
     stop("either subset by lat/lon or shape, not both.")
-
+  
   data_obj <- x@data
   
   
   if (inherits(data_obj, "sf")) {
     
-    print("In development")
+    # Subset by latitude and/or longitude
+    if (!is.null(lat_range) || !is.null(lon_range)) {
+      
+      # Extract geographic coordinates (WGS84)
+      coords <- sf::st_coordinates(
+        sf::st_transform(data_obj, 4326)
+      )
+      
+      keep <- rep(TRUE, nrow(data_obj))
+      
+      if (!is.null(lat_range)) {
+        keep <- keep & coords[, "Y"] >= min(lat_range) &
+          coords[, "Y"] <= max(lat_range)
+      }
+      
+      if (!is.null(lon_range)) {
+        keep <- keep & coords[, "X"] >= min(lon_range) &
+          coords[, "X"] <= max(lon_range)
+      }
+      
+      data_obj <- data_obj[keep, ]
+    }
     
+    # Subset by year and/or month
+    if (!is.null(years) || !is.null(months)) {
+      
+      if (!"time" %in% names(data_obj)) {
+        stop("sf object has no time column.", call. = FALSE)
+      }
+      
+      keep <- rep(TRUE, nrow(data_obj))
+      
+      if (!is.null(years)) {
+        keep <- keep & lubridate::year(data_obj$time) %in% years
+      }
+      
+      if (!is.null(months)) {
+        keep <- keep & lubridate::month(data_obj$time) %in% months
+      }
+      
+      data_obj <- data_obj[keep, ]
+    }
+    
+    # Subset by shape
+    if (!is.null(shape)) {
+      
+      shape <- sf::st_transform(shape, sf::st_crs(data_obj))
+      
+      data_obj <- sf::st_filter(
+        data_obj, shape,
+        .predicate = sf::st_intersects
+      )
+    }
+    
+    # Check whether any observations remain
+    if (nrow(data_obj) == 0) {
+      stop("No coordinates within the requested range.", call. = FALSE)
+    }
     
   } else if (inherits(data_obj, "stars")) {
     
@@ -516,7 +572,7 @@ ea.subset.spatial.dims <- function(x,
       } else {
         keep <- vals >= min(range) & vals <= max(range)
       }
-     
+      
       if (!any(keep)) {
         stop("No coordinates within the requested range.", call.=FALSE)
       }
@@ -567,8 +623,55 @@ ea.subset.spatial.dims <- function(x,
     
   } else if (inherits(data_obj, "SpatRaster")) {
     
-    print("In development")
-  
+    # Subset latitude and/or longitude
+    if (!is.null(lat_range) || !is.null(lon_range)) {
+      
+      ext <- terra::ext(data_obj)
+      
+      lon <- if (is.null(lon_range)) c(ext[1], ext[2]) else range(lon_range)
+      lat <- if (is.null(lat_range)) c(ext[3], ext[4]) else range(lat_range)
+      
+      crop_ext <- terra::ext(lon[1], lon[2], lat[1], lat[2])
+      
+      data_obj <- terra::crop(data_obj, crop_ext)
+    }
+    
+    # Subset years and/or months
+    if (!is.null(years) || !is.null(months)) {
+      
+      times <- terra::time(data_obj)
+      
+      if (!terra::has.time(data_obj)) {
+        stop("SpatRaster has no time metadata.", call. = FALSE)
+      }
+      
+      keep <- rep(TRUE, length(times))
+      
+      if (!is.null(years)) {
+        keep <- keep & lubridate::year(times) %in% years
+      }
+      
+      if (!is.null(months)) {
+        keep <- keep & lubridate::month(times) %in% months
+      }
+      
+      if (!any(keep)) {
+        stop("No raster layers within the requested time range.",
+             call. = FALSE)
+      }
+      
+      data_obj <- data_obj[[which(keep)]]
+    }
+    
+    # Subset by shape
+    if (!is.null(shape)) {
+      
+      shape <- terra::vect(shape)
+      shape <- terra::project(shape, terra::crs(data_obj))
+      
+      data_obj <- terra::crop(data_obj, shape, mask = TRUE)
+    }
+    
   } else {
     stop("Unsupported spatial data type for subsetting.", call. = FALSE)
   }
@@ -613,14 +716,54 @@ ea.subset.spatial.values <- function(x,
   
   if (inherits(data_obj, "sf")) {
     
-    print("In development")
+    if (!variable %in% names(data_obj)) {
+      stop("variable must be in ea_spatial object", call. = FALSE)
+    }
     
+    # Extract values
+    values <- data_obj[[variable]]
+    
+    # Remove units for comparison
+    if (inherits(values, "units")) {
+      values <- units::drop_units(values)
+    }
+    
+    # Identify values to retain
+    if (!is.null(value_range)) {
+      
+      keep <- values >= min(value_range) &
+        values <= max(value_range)
+      
+    } else if (!is.null(value_exact)) {
+      
+      keep <- values %in% value_exact
+      
+    }
+    
+    # Remove NA values from selection
+    keep[is.na(keep)] <- FALSE
+    
+    if (!any(keep)) {
+      stop("No observations within the requested value range.",
+           call. = FALSE)
+    }
+    
+    # Subset observations, preserving sf geometry
+    data_obj <- data_obj[keep, ]
     
   } else if (inherits(data_obj, "stars")) {
     
     if(!variable %in% names(data_obj)) stop("variable must be in ea_spatial object", call.=FALSE)
   
+    # extract values
     values <- data_obj[[variable]]
+    
+    # remove units to filter, but keep to replace later
+    if(inherits(values,"units")){
+      values_unit <- units(values)
+      units(values) <- NULL
+    }
+    
     
     if (!is.null(value_range)) {
       
@@ -647,7 +790,28 @@ ea.subset.spatial.values <- function(x,
     
   } else if (inherits(data_obj, "SpatRaster")) {
     
-    print("In development")
+    # print warning
+    message("ea.subset.spatial.values assumes SpatRaster layers are the same variable")
+    
+    # Filter values across all layers
+    if (!is.null(value_range)) {
+      
+      keep <- data_obj >= min(value_range) &
+        data_obj <= max(value_range)
+      
+    } else if (!is.null(value_exact)) {
+      
+      keep <- data_obj %in% value_exact
+      
+    }
+    
+    # Check that at least some values remain
+    if (!any(terra::global(keep, "sum", na.rm = TRUE)[, 1] > 0)) {
+      stop("No coordinates within the requested range.", call. = FALSE)
+    }
+    
+    # Mask values outside the requested range
+    data_obj <- terra::ifel(keep, data_obj, NA)
     
   } else {
     stop("Unsupported spatial data type for subsetting.", call. = FALSE)
