@@ -10,7 +10,7 @@ data("glorys_bottom_temperature")
 glorys_bottom_temperature <- ea.subset.spatial.dims(glorys_bottom_temperature, months = 7)
 
 plot(glorys_bottom_temperature, style = "fill")
-JL(satellite_ocean_colour, style = "fill", coastline_region = "shape")
+plot(glorys_bottom_temperature, style = "fill", coastline_region = "shape")
 
 stars_obj <- ea.subset.spatial.dims(glorys_bottom_temperature,
                                     years = seq(2016, 2026, by = 2),
@@ -77,16 +77,16 @@ unique(ea_sf@data$time)
 
 
 # test ea plot for stars:
-JL(ea_star, style = "fill") + 
+plot(ea_star, style = "fill") + 
   facet_wrap(~time)
 
-JL(ea_star, 
+plot(ea_star, 
    style = "contour", 
    contour.bw = 5, 
    coastline_region = "shape") + 
   facet_wrap(~time)
 
-JL(ea_star, 
+plot(ea_star, 
    style = "contour", 
    contour.type = "aggregate", 
    contour.bw = 2,
@@ -100,16 +100,16 @@ JL(ea_star2, style = "area") +
 
 
 # test ea plot for spatraster:
-JL(ea_rast, style = "fill") +
+plot(ea_rast, style = "fill") +
   facet_wrap(~lyr)
 
-JL(ea_rast, 
+plot(ea_rast, 
    style = "contour", 
    contour.bw = 2,
    coastline_region = "shape") + 
   facet_wrap(~lyr)
 
-JL(ea_rast, 
+plot(ea_rast, 
    style = "contour", 
    contour.type = "aggregate", 
    contour.bw = 2,
@@ -117,7 +117,7 @@ JL(ea_rast,
 
 ea_rast2 <- ea.subset.spatial.values(ea_rast,
                                      value_range = c(10,Inf))
-JL(ea_rast2, style = "area") + 
+plot(ea_rast2, style = "area") + 
   facet_wrap(~lyr)
 
 
@@ -137,7 +137,7 @@ JL(ea_sf2, style = 'area', point_size = .1) +
 
 JL(ea_sf2, style = 'bubble')
 
-
+plot(ea_sf, style = "trend")
 
 
 # subset to shape ---------------------------------------------------------

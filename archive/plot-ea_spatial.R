@@ -1,3 +1,5 @@
+## ARCHIVED SCRIPT
+
 #' @title Plot an ea_spatial object with multiple styles
 #' @rdname plot-ea_spatial
 #' @description

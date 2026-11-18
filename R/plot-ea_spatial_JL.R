@@ -6,6 +6,7 @@
 #'   * "contour": contour lines of value; either by timestep or timeseries average.
 #'   * "area": solid shape for all non-NA values (for pairing with ea.subset.spatial.values())
 #'   * "bubble": bubble plot (point size ∝ value)
+#'   * "trend": the linear trend of the variable per raster cell
 #'
 #' @param x An `ea_spatial` object.
 #' @param y Ignored. Included for S4 generic consistency.
@@ -38,7 +39,7 @@ setGeneric("plot")
 
 setMethod("plot", signature(x = "ea_spatial", y = "missing"),
           function(x,
-               style = c("fill", "default", "contour", "area"),
+               style = c("fill", "default", "contour", "area", "bubble", "trend"),
                coastline = TRUE,
                coastline_region = NULL,
                coastline_color = "darkgrey",

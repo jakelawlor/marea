@@ -8,7 +8,8 @@ plot_spatraster <- function(p, df, style, contour.type, contour.bw){
               default = plot_spatraster_fill(p, df),
               fill = plot_spatraster_fill(p, df),
               contour = plot_spatraster_contour(p, df, contour.bw, contour.type),
-              area = plot_spatraster_area(p, df)
+              area = plot_spatraster_area(p, df),
+              trend = plot_spatraster_trend(p, df)
               )
   
 }
@@ -60,6 +61,48 @@ plot_spatraster_area <- function(p, df){
       low = "steelblue", high = "steelblue",
       na.value = "transparent", guide = "none"
     )
+  return(p)
+  
+}
+
+
+
+# plot SpatRaster trends --------------------
+# relevant for timeseries data
+plot_spatraster_trend <- function(p, df){
+  
+  # function for finding the linear slope of every cell
+  gradFun <- function(x, th) {
+    x <- x[!is.na(x)]
+    if (length(x) > th) {
+      s <- lm(x~c(1:length(x)))
+      s$coefficients[2] 
+    } else NA
+  }
+  
+  # calculate trend for every cell
+  trendFun <- function(df, th, ncores=NULL, file_name="",overwrite=TRUE) {
+    if(is.null(ncores)){
+      tmp <- terra::app(df,gradFun,th=th,filename=file_name,overwrite=overwrite)
+    } else {
+      tmp <- terra::app(df,gradFun,th=th,cores=ncores,filename=file_name,overwrite=overwrite)
+    }
+    names(tmp) <- "Trend" # name the layer
+    return(tmp)
+  }
+  
+  # calculate trend on every cell
+  trend = trendFun(
+    df,
+    th = 0.25*nlyr(df)) ## set minimum N obs. to 1/4 time series length
+  
+  
+  p <- p +
+    tidyterra::geom_spatraster(data = trend) + 
+    scale_fill_gradient2(high = "tomato2", 
+                         low = "cornflowerblue", 
+                         mid = "grey95" ,
+                         na.value = "transparent")
   return(p)
   
 }
