@@ -67,44 +67,39 @@ plot_spatraster_area <- function(p, df){
 
 
 
-# plot SpatRaster trends --------------------
+# plot SpatRaster trends (linear change per timestep) --------------------
 # relevant for timeseries data
-plot_spatraster_trend <- function(p, df){
+plot_spatraster_trend <- function(p, df) {
   
-  # function for finding the linear slope of every cell
+  # Calculate linear slope, preserving missing time steps
   gradFun <- function(x, th) {
-    x <- x[!is.na(x)]
-    if (length(x) > th) {
-      s <- lm(x~c(1:length(x)))
-      s$coefficients[2] 
-    } else NA
-  }
-  
-  # calculate trend for every cell
-  trendFun <- function(df, th, ncores=NULL, file_name="",overwrite=TRUE) {
-    if(is.null(ncores)){
-      tmp <- terra::app(df,gradFun,th=th,filename=file_name,overwrite=overwrite)
+    t <- seq_along(x)
+    keep <- !is.na(x)
+    
+    if (sum(keep) > th && sum(keep) >= 2) {
+      unname(coef(lm(x[keep] ~ t[keep]))[2])
     } else {
-      tmp <- terra::app(df,gradFun,th=th,cores=ncores,filename=file_name,overwrite=overwrite)
+      NA_real_
     }
-    names(tmp) <- "Trend" # name the layer
-    return(tmp)
   }
   
-  # calculate trend on every cell
-  trend = trendFun(
+  # Calculate trend for each cell
+  trend <- terra::app(
     df,
-    th = 0.25*nlyr(df)) ## set minimum N obs. to 1/4 time series length
+    gradFun,
+    th = 0.25 * terra::nlyr(df)
+  )
   
+  names(trend) <- "Trend"
   
-  p <- p +
-    tidyterra::geom_spatraster(data = trend) + 
-    scale_fill_gradient2(high = "tomato2", 
-                         low = "cornflowerblue", 
-                         mid = "grey95" ,
-                         na.value = "transparent")
-  return(p)
-  
+  # Plot trends
+  p +
+    tidyterra::geom_spatraster(data = trend) +
+    ggplot2::scale_fill_gradient2(
+      high = "tomato2",
+      low = "cornflowerblue",
+      mid = "grey95",
+      midpoint = 0,
+      na.value = "transparent"
+    )
 }
-
-

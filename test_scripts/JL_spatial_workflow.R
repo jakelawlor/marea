@@ -95,7 +95,7 @@ plot(ea_star,
 ea_star2 <- ea.subset.spatial.values(ea_star, 
                                      variable = target_var,
                                      value_range = c(8,Inf))
-JL(ea_star2, style = "area") +
+plot(ea_star2, style = "area") +
   facet_wrap(~time)
 
 
@@ -120,24 +120,26 @@ ea_rast2 <- ea.subset.spatial.values(ea_rast,
 plot(ea_rast2, style = "area") + 
   facet_wrap(~lyr)
 
+plot(ea_rast, style = "trend")
+
 
 
 # test ea plot for sf
-JL(ea_sf, style = "fill", point_size = .1) + 
+plot(ea_sf, style = "fill", point_size = .1) + 
   facet_wrap(~time)
 
-JL(ea_sf, style = "contour")
+plot(ea_sf, style = "contour")
 
 
 ea_sf2 <- ea.subset.spatial.values(ea_sf, 
                                    target_var, 
                                    value_range = c(0,90))
-JL(ea_sf2, style = 'area', point_size = .1) +
+plot(ea_sf2, style = 'area', point_size = .1) +
   facet_wrap(~time)
 
-JL(ea_sf2, style = 'bubble')
+plot(ea_sf2, style = 'bubble')
 
-plot(ea_sf, style = "trend")
+
 
 
 # subset to shape ---------------------------------------------------------
@@ -148,11 +150,11 @@ data("LFAs_sf")
 
 lfa_33 <- LFAs_sf %>%
   filter(LFA == "33") %>%
-  st_transform(crs = st_crs(satellite_ocean_colour@data)) # use same CRS as the data for spatial operations
+  st_transform(crs = st_crs(glorys_bottom_temperature@data)) # use same CRS as the data for spatial operations
 
 
 ea_star_lfa <- ea.subset.spatial.dims(ea_star, shape = lfa_33)
-JL(ea_star_lfa, 
+plot(ea_star_lfa, 
      style = "fill",
    coastline_region = "nw_atlantic") + 
   geom_sf(data = lfa_33,
@@ -161,20 +163,27 @@ JL(ea_star_lfa,
 
 
 ea_rast_lfa <- ea.subset.spatial.dims(ea_rast, shape = lfa_33)
-JL(ea_rast_lfa, 
+plot(ea_rast_lfa, 
    style = "fill",
    coastline_region = "nw_atlantic") + 
   geom_sf(data = lfa_33,
           color = "red", fill = "transparent") + 
   facet_wrap(~lyr)
 
+plot(ea_rast_lfa,
+     style = "trend",
+     coastline_region = "buffer") +
+  geom_sf(data = lfa_33, color = "black", fill = "transparent")
+
 ea_sf_lfa <- ea.subset.spatial.dims(ea_sf, shape = lfa_33)
-JL(ea_sf_lfa, 
+plot(ea_sf_lfa, 
    style = "fill",
    point_size = .9) + 
   geom_sf(data = lfa_33,
           color = "red", fill = "transparent") + 
   facet_wrap(~time)
   
+
+
 
 

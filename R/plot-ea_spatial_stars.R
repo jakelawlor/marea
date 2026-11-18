@@ -8,7 +8,8 @@ plot_stars <- function(p, df, style, contour.type, contour.bw, value_col){
               default = plot_stars_fill(p, df),
               fill = plot_stars_fill(p, df),
               contour = plot_stars_contour(p, df, contour.bw, contour.type),
-              area = plot_stars_area(p, df)
+              area = plot_stars_area(p, df),
+              trend = plot_stars_trend(p, df)
   )
   
 }
@@ -89,6 +90,60 @@ plot_stars_area <- function(p, df){
   
   return(p)
   
+}
+
+
+
+# plot stars trends (linear change per timestep) --------------------
+# most relevant for timeseries data
+plot_stars_trend <- function(p, df) {
+  
+  # Calculate linear slope, preserving missing time steps
+  gradFun <- function(x, th) {
+    t <- seq_along(x)
+    keep <- !is.na(x)
+    
+    if (sum(keep) > th && sum(keep) >= 2) {
+      unname(coef(lm(x[keep] ~ t[keep]))[2])
+    } else {
+      NA_real_
+    }
+  }
+  
+  # Identify spatial dimensions
+  dims <- names(stars::st_dimensions(df))
+  spatial_dims <- intersect(c("longitude", "latitude"), dims)  
+
+  
+  if (length(spatial_dims) != 2) {
+    stop("Expected spatial dimensions named 'longitude' and 'latitude'.")
+  }
+  
+  # Calculate trend across time for each cell
+  trend <- stars::st_apply(
+    df,
+    MARGIN = spatial_dims,
+    FUN = gradFun,
+    th = 0.25 * prod(
+      stars::st_dimensions(df)[
+        setdiff(dims, spatial_dims)
+      ] |> lapply(function(x) x$to - x$from + 1) |>
+        unlist()
+    )
+  )
+  
+  names(trend) <- "Trend"
+  
+  # Plot trends
+  p +
+    stars::geom_stars(data = trend) +
+    ggplot2::scale_fill_gradient2(
+      high = "tomato2",
+      low = "cornflowerblue",
+      mid = "grey95",
+      midpoint = 0,
+      na.value = "transparent"
+    )
 }
 
 
